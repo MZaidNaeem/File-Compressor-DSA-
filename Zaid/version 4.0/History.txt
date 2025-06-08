@@ -1,0 +1,4 @@
+decompress test--lzw.bin to test--lzw-to-txt.txt 26.406693
+decompress test--huffman.bin to test--huffman-to-txt.txt 38.581409
+compress test.txt to test--luffman.bin 38.581409
+compress test.txt to test--lzw.bin 26.732939

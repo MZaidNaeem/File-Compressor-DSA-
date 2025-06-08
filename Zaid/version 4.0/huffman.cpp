@@ -495,10 +495,123 @@ void writeToFileFromInput(string filename,string content) {
     cout << "Content written to " << filename+".txt" << endl;
 }
 
+void writeToFileFromInput_atEnd(string filename,string content) {
+
+
+
+    ofstream outFile(filename + ".txt", ios::app);
+    if (!outFile) {
+        cout << "Failed to open file." << endl;
+        return;
+    }
+
+    outFile << content << '\n';
+    outFile.close();
+
+    cout << "\nFile history saved to " << filename+".txt" << endl;
+}
+
+
+
+void readHistory(string filename) {
+    ifstream inFile(filename + ".txt");
+    if (!inFile) {
+        cout << "Failed to open file." << endl;
+        return;
+    }
+
+    string line;
+    int num=1;
+    while (getline(inFile, line)) {
+        cout <<to_string(num) + ". "+ line << endl;
+        num++;
+    }
+
+    inFile.close();
+}
+
+
+class historyNode {
+public:
+    int id;
+    string operation;
+    string originalFile;
+    string newFile;
+    double ratios;
+    historyNode* next;
+
+    historyNode(int i, string op, string orig, string comp, double Ratio) {
+        id = i;
+        operation = op;
+        originalFile = orig;
+        newFile = comp;
+        ratios = Ratio;
+        next = nullptr;
+    }
+};
+
+// Function to read file word by word and build the linked list
+historyNode* readCompressionData(const string& filename) {
+    ifstream file(filename + ".txt");
+    if (!file) {
+        cerr << "Cannot open file: " << filename << endl;
+        return nullptr;
+    }
+
+    string operation, word1, word2, word3;
+    double ratios;
+    int idCounter = 1;
+    historyNode* head = nullptr;
+    historyNode* tail = nullptr;
+
+    while (file >> operation >> word1 >> word2 >> word3 >> ratios) {
+        if (word2 != "to") {
+            cout << "\nUnexpected format, expected 'to' but got '" << word2 << "'" << endl;
+            continue;
+        }
+
+        historyNode* newNode = new historyNode(idCounter++, operation, word1, word3, ratios);
+
+        if (!head) {
+            head = newNode;
+            tail = newNode;
+        } else {
+            tail->next = newNode;
+            tail = newNode;
+        }
+    }
+
+    return head;
+}
+
+// Function to print the linked list
+void printHistory(historyNode* head) {
+    historyNode* current = head;
+    while (current) {
+        cout << "ID: " << current->id
+             << " , Operation: " << current->operation
+             << " , Original File: " << current->originalFile
+             << " , New File: " << current->newFile
+             << " , Size Ratio: " << current->ratios << endl;
+        current = current->next;
+    }
+}
+
+// Function to free memory used by the linked list
+void freeList(historyNode* head) {
+    while (head) {
+        historyNode* temp = head;
+        head = head->next;
+        delete temp;
+    }
+}
+
 
 int main() {
     int choice;
     string fileName,input;
+
+    historyNode* history= readCompressionData("history");
 
 
 
@@ -513,6 +626,7 @@ int main() {
         cout << "5. Compress and made file using lzw\n";
         cout << "6. Decompress and made file using lzw\n";
         cout << "7. Decompress and show file data (lzw)\n";
+        cout << "8. Show the history of the compressed Files\n";
         cout << "0. Exit\n";
         cout << "------------------------------\n";
         cout << "Enter your choice: ";
@@ -602,6 +716,12 @@ int main() {
 
                 cout << "\nOriginal Size     : " << originalSize  << " Bytes";
                 cout << "\nCompressed Size   : " << compressedSize  << " Bytes";
+                float compressedRatio=(1.0 - (compressedSize*1.0/originalSize*1.0))*100.0;
+                cout << "\nCompressed Ratio  : " << compressedRatio << " %";
+
+                string historyData= "compress "+fileName+ ".txt to " +fileName + "--luffman.bin" + " "+ to_string(compressedRatio) ;
+                writeToFileFromInput_atEnd("History",historyData);
+
 
 
                 break;
@@ -649,6 +769,24 @@ int main() {
 
                 writeToFileFromInput(fileName+"-to-txt",decoded);
 
+
+
+                ifstream original(fileName , ios::binary | ios::ate);
+                int originalSize = original.tellg();
+                original.close();
+
+                ifstream decompressed(fileName + "-to-txt.txt", ios::binary | ios::ate);
+                int decompressedSize = decompressed.tellg();
+                decompressed.close();
+
+
+                cout << "\nOriginal Size     : " << originalSize  << " Bytes";
+                cout << "\ndecompress Size   : " << decompressedSize  << " Bytes";
+                float decompressedRatio=(1.0 - (originalSize*1.0/decompressedSize*1.0))*100.0;
+                cout << "\ndecompress Ratio  : " << decompressedRatio << " %";
+
+                writeToFileFromInput_atEnd("History","decompress "+ fileName+".bin to "+fileName+"-to-txt.txt" + " " + to_string(decompressedRatio));
+
                 break;
             }
             case 4:{
@@ -689,6 +827,9 @@ int main() {
 
 
                 cout << "\nDecoded Text from File:\n" << decoded << "\n";
+
+
+
                 break;
             }
 
@@ -714,6 +855,10 @@ int main() {
 
                 cout << "\nOriginal Size     : " << originalSize  << " Bytes";
                 cout << "\nCompressed Size   : " << compressedSize  << " Bytes";
+                float compressedRatio=(1.0 - (compressedSize*1.0/originalSize*1.0))*100.0;
+                cout << "\nCompressed Ratio  : " << compressedRatio << " %";
+
+                writeToFileFromInput_atEnd("History","compress "+ fileName+".txt to "+fileName+"--lzw.bin" + " " + to_string(compressedRatio));
 
                 break;
             }
@@ -729,6 +874,24 @@ int main() {
                 cout << "Decompressed string: " << decompressed << endl;
                 writeToFileFromInput(fileName+"-to-txt",decompressed);
 
+
+
+                ifstream original5(fileName , ios::binary | ios::ate);
+                int originalSize = original5.tellg();
+                original5.close();
+
+                ifstream decompressed5(fileName + "-to-txt.txt", ios::binary | ios::ate);
+                int decompressedSize = decompressed5.tellg();
+                decompressed5.close();
+
+
+                cout << "\nOriginal Size     : " << originalSize  << " Bytes";
+                cout << "\ndecompress Size   : " << decompressedSize  << " Bytes";
+                float decompressedRatio=(1.0 - (originalSize*1.0/decompressedSize*1.0))*100.0;
+                cout << "\ndecompress Ratio  : " << decompressedRatio << " %";
+
+                writeToFileFromInput_atEnd("History","decompress "+ fileName+".bin to "+fileName+"-to-txt.txt" + " " + to_string(decompressedRatio));
+
                 break;
 
             }
@@ -743,6 +906,11 @@ int main() {
                 cout << "Decompressed string: " << decompressed << endl;
                 break;
 
+            }
+
+            case 8:{
+                printHistory(history);
+                break;
             }
 
             case 0:
