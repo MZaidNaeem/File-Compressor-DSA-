@@ -1,0 +1,4 @@
+compress myfile.txt to myfile--luffman.bin 41.353127
+decompress myfile--huffman.bin to myfile--huffman-to-txt.txt 41.399616
+compress myfile.txt to myfile--lzw.bin 13.882593
+decompress myfile--lzw.bin to myfile--lzw-to-txt.txt 13.765320
